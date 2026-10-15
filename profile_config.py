@@ -1,3 +1,5 @@
+import os
+import json
 from pathlib import Path
 
 import yaml
@@ -16,10 +18,17 @@ REQUIRED_FIELDS = (
 
 def load_profile(path: str | Path = "profile.yaml") -> dict:
     profile_path = Path(path)
-    if not profile_path.exists():
+    private_json = os.environ.get("PERSONAL_PROFILE_JSON", "").strip()
+    if private_json:
+        try:
+            profile = json.loads(private_json)
+        except (ValueError, TypeError):
+            raise ValueError("Private profile Secret is invalid JSON") from None
+    elif not profile_path.exists():
         raise ValueError(f"找不到用户画像配置: {profile_path}")
 
-    profile = yaml.safe_load(profile_path.read_text(encoding="utf-8")) or {}
+    else:
+        profile = yaml.safe_load(profile_path.read_text(encoding="utf-8")) or {}
     missing = [field for field in REQUIRED_FIELDS if field not in profile]
     if missing:
         raise ValueError(f"profile.yaml 缺少字段: {', '.join(missing)}")
