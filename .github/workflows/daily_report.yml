@@ -54,7 +54,10 @@ jobs:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY || secrets.DEEPSEEK }}
           FEISHU_WEBHOOK: ${{ secrets.FEISHU_WEBHOOK }}
           CI: "true"
-        run: python main.py
+        run: |
+          python -m py_compile main.py analyzer.py profile_config.py
+          python -c "from profile_config import load_profile; p=load_profile(); assert p.get('selection_policy'), 'Private profile missing'; print('Private profile loaded and validated')"
+          python main.py
 
       - name: Commit DB back to main
         if: env.PERSONAL_PROFILE_JSON == ''
