@@ -24,94 +24,58 @@ skills:
   - GLP
 
 project_evidence: []
-
 learning_targets:
   - 单细胞测序
   - AI+生物医药
   - 药物研发数据分析
-
 unverified_skills: []
-
 target_roles:
   - name: 生物药与药物研发
-    keywords:
-      - 药物研发
-      - 生物药研发
-      - 抗体研发
-      - 蛋白
-      - 细胞培养
-      - 分子生物学
-      - 药理
-      - 毒理
+    keywords: [药物研发, 生物药研发, 抗体研发, 蛋白, 细胞培养, 分子生物学, 药理, 毒理]
   - name: 生物信息与测序
-    keywords:
-      - 生物信息
-      - 生信
-      - 测序
-      - NGS
-      - 单细胞
-      - 数据分析
-      - Python
-      - R
+    keywords: [生物信息, 生信, 测序, NGS, 单细胞, 数据分析, Python, R]
   - name: 工艺、分析与质量
-    keywords:
-      - 工艺研发
-      - 制剂
-      - 分析方法
-      - 质量研究
-      - QC
-      - QA
-      - GMP
-      - 验证
+    keywords: [工艺研发, 制剂, 分析方法, 质量研究, QC, QA, GMP, 验证]
   - name: 临床、注册与医学
-    keywords:
-      - 临床
-      - 注册
-      - 医学
-      - CRO
-      - CDMO
-      - 医学事务
+    keywords: [临床, 注册, 医学, CRO, CDMO, 医学事务]
   - name: 医疗器械与IVD研发
-    keywords:
-      - 医疗器械
-      - IVD
-      - 体外诊断
-      - 试剂研发
-      - 硬件研发
-
+    keywords: [医疗器械, IVD, 体外诊断, 试剂研发]
 excluded_title_keywords:
   - 销售
+  - 销售代表
   - 市场
+  - 市场推广
+  - 商务
+  - BD
+  - 运营
   - 行政
+  - 人事
   - 财务
   - 采购
   - 法务
   - 客服
+  - 供应链
+  - 物流
+  - 生产管理
+  - 设备管理
+  - 维修
   - 纯软件开发
-  - 纯前端
-  - 纯后端
-
-preferred_cities:
-  - 北京
-  - 上海
-  - 广州
-  - 深圳
-  - 杭州
-  - 南京
-  - 苏州
-  - 武汉
-  - 成都
-  - 天津
-  - 济南
-  - 重庆
-
+  - 软件工程师
+  - 算法工程师
+  - IT
+  - 前端
+  - 后端
+  - 硬件工程师
+  - 机械工程师
+  - 电气工程师
+  - 电子工程师
+preferred_cities: [北京, 上海, 广州, 深圳, 杭州, 南京, 苏州, 武汉, 成都, 天津, 济南, 重庆]
 score_component_limits:
   core_direction: 25
   required_skills: 25
   project_evidence: 25
   engineering_stack: 15
   basic_criteria: 10
-
 score_thresholds:
   recommend: 80
   consider: 60
