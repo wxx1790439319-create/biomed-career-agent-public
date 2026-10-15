@@ -16,7 +16,7 @@ import job_cohorts
 import job_filters
 import notifier
 import reporter
-from profile_config import load_profile
+from profile_config import load_profile, select_personal_jobs
 from scripts import qq_docs_27_autumn_monitor
 from crawlers import CRAWLER_MAP
 
@@ -220,10 +220,19 @@ def main():
     # 4. Only formal, profile-relevant campus jobs enter the database.
     # Internship/social jobs and explicit direction-out roles are deterministic
     # noise. Block them before cache lookup and upsert so the DB stays clean.
-    all_jobs, dropped_jobs = job_filters.filter_formal_campus_jobs(all_jobs)
+    if profile.get("selection_policy"):
+        selected = select_personal_jobs(all_jobs, profile)
+        dropped_jobs = [j for j in all_jobs if job_filters.is_intern_job(j)]
+        all_jobs = [j for j in selected if not job_filters.is_intern_job(j)]
+        logger.info("个人规则：保留 %d，待核实 %d", len(all_jobs), sum(j.get("selection_status") == "pending" for j in all_jobs))
+    else:
+        all_jobs, dropped_jobs = job_filters.filter_formal_campus_jobs(all_jobs)
     if dropped_jobs:
         logger.info("已过滤 %d 个非正式校招岗位（实习/提前批/社招），不入库", len(dropped_jobs))
-    all_jobs, dropped_direction_out = job_filters.filter_target_direction_jobs(all_jobs)
+    if profile.get("selection_policy"):
+        dropped_direction_out = []
+    else:
+        all_jobs, dropped_direction_out = job_filters.filter_target_direction_jobs(all_jobs)
     if dropped_direction_out:
         logger.info("已过滤 %d 个明确方向外岗位，不进入缓存与数据库", len(dropped_direction_out))
 
@@ -262,6 +271,8 @@ def main():
         tier = db_module.get_screening_tier(
             conn, job, analyzer.SCREENING_VERSION
         )
+        if profile.get("selection_policy"):
+            tier = None
         if tier:
             cached_tiers.append((job, tier))
         else:
@@ -326,6 +337,10 @@ def main():
 
     # 6. 细分析活跃岗位
     active = [j for j in db_module.get_active_jobs(conn) if j.get("company") in allowed_companies]
+    active = select_personal_jobs(active, profile)
+    for item in active:
+        if profile.get("selection_policy"):
+            item["screening_tier"] = analyzer.local_screening_tier(item, profile)
     active_current = [
         job for job in active if job_cohorts.is_confirmed_current(job)
     ]
@@ -385,11 +400,13 @@ def main():
     # 7.1 当日活跃快照（历史留档：reports/YYYY-MM-DD.html）
     report_data = db_module.get_active_report_data(conn)
     report_data["items"] = [j for j in report_data.get("items", []) if j.get("company") in allowed_companies]
+    report_data["items"] = select_personal_jobs(report_data["items"], profile)
     report_path = reporter.generate_report(today_iso, report_data, reports_dir)
     # 7.2 累计首页（reports/index.html）：「总体岗位」=全部岗位按匹配度排序、
     #     「今日新增」=crawled_at==最新批次、「投递记录」=DB 投递看板（只读）。
     #     gh-pages 根路径稳定入口，每天覆盖刷新。
     all_items = [j for j in db_module.get_all_jobs_with_analysis(conn) if j.get("company") in allowed_companies]
+    all_items = select_personal_jobs(all_items, profile)
     reporter.generate_report(
         today_iso,
         {
@@ -405,6 +422,7 @@ def main():
     #    「今日新增」用「最新批次 crawled_at」判定，而非本次运行新插入 new_jobs——
     #    否则本地批量导入+提交后，次日 CI 重爬岗位已存在，new_jobs=[] 会推「今日新增 0」。
     all_jobs_with_analysis = [j for j in db_module.get_all_jobs_with_analysis(conn) if j.get("company") in allowed_companies]
+    all_jobs_with_analysis = select_personal_jobs(all_jobs_with_analysis, profile)
     latest_crawl = db_module.get_latest_crawl_date(conn)
     notify_new = [
         j for j in active_current if j.get("crawled_at") == latest_crawl
