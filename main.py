@@ -147,63 +147,8 @@ def main():
         sys.exit(1)
     config = load_config(str(config_path))
 
-    # Public Tencent Docs is a lead source. It is read before the fixed company
-    # crawl; only a lead that returns formal campus jobs may update config.
-    try:
-        source_monitor = qq_docs_27_autumn_monitor.run(config["companies"])
-        attached_campaigns = qq_docs_27_autumn_monitor.attach_official_campaign_urls(
-            source_monitor["rows"],
-            config["companies"],
-        )
-        logger.info(
-            "已为 %d 家腾讯文档公司绑定官方校招活动页，用于届别证据检查",
-            attached_campaigns,
-        )
-        approved_entries, onboarding_attempts = qq_docs_27_autumn_monitor.validate_unconfigured_rows(
-            source_monitor["rows"]
-        )
-        if approved_entries:
-            qq_docs_27_autumn_monitor.append_verified_companies(config_path, approved_entries)
-            config["companies"].extend(approved_entries)
-            approved_names = {entry["name"].casefold() for entry in approved_entries}
-            for row in source_monitor["rows"]:
-                if row["canonical_name"].casefold() in approved_names:
-                    row["in_config"] = True
-            source_monitor["covered"] = sum(row["in_config"] for row in source_monitor["rows"])
-            source_monitor["needs_integration"] = sum(
-                not row["in_config"] for row in source_monitor["rows"]
-            )
-            logger.info(
-                "腾讯文档自动验证通过 %d 家，已写入配置并加入本轮抓取：%s",
-                len(approved_entries),
-                ", ".join(entry["name"] for entry in approved_entries),
-            )
-        trusted_cohorts = qq_docs_27_autumn_monitor.attach_trusted_cohort_evidence(
-            source_monitor["rows"],
-            config["companies"],
-        )
-        logger.info(
-            "已为 %d 家公司绑定腾讯文档27届正式秋招兜底证据",
-            trusted_cohorts,
-        )
-        if onboarding_attempts:
-            qq_docs_27_autumn_monitor.update_integration_status(
-                Path(__file__).parent / "outputs" / "company_integration_status.md",
-                onboarding_attempts,
-            )
-        source_monitor["auto_onboarding"] = onboarding_attempts
-        qq_docs_27_autumn_monitor.write_report(
-            source_monitor,
-            Path(__file__).parent / "outputs" / "qq_docs_27_autumn_monitor.json",
-        )
-        logger.info(
-            "腾讯文档 27届秋招前置检查：%d 条，已覆盖 %d，待接入 %d",
-            len(source_monitor["rows"]),
-            source_monitor["covered"],
-            source_monitor["needs_integration"],
-        )
-    except Exception as exc:  # A source outage must not block the daily crawl.
-        logger.warning("腾讯文档 27届秋招前置检查失败：%s", exc)
+    # Strict biomedical allowlist: disable cross-industry automatic onboarding.
+    logger.info("企业白名单：%s", ", ".join(c["name"] for c in config["companies"]))
 
     profile_path = Path(
         os.environ.get("PROFILE_PATH", Path(__file__).parent / "profile.yaml")
