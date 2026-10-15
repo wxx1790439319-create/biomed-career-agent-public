@@ -14,6 +14,7 @@ import db as db_module
 import job_cohorts
 import job_details
 import job_filters
+from profile_config import personal_job_decision
 
 logger = logging.getLogger(__name__)
 
@@ -23,8 +24,8 @@ logger = logging.getLogger(__name__)
 _ANALYZE_WORKERS = max(1, int(os.environ.get("ANALYZE_WORKERS", "4")))
 _JD_HYDRATE_WORKERS = max(1, int(os.environ.get("JD_HYDRATE_WORKERS", "2")))
 
-ANALYSIS_VERSION = "match-v2.0"
-SCREENING_VERSION = "target-tier-v2.0"
+ANALYSIS_VERSION = "personal-biomed-v3.0"
+SCREENING_VERSION = "personal-biomed-v3.0"
 
 _SCORE_COMPONENT_LIMITS = {
     "core_direction": 25,
@@ -344,6 +345,13 @@ def local_screening_tier(job: dict, profile: dict | None = None) -> str:
     body = unicodedata.normalize("NFKC", str(job.get("jd_raw") or "")).strip()
     if job_filters.is_job_record_noise({**job, "title": title}):
         return "C"
+    if (profile or {}).get("selection_policy"):
+        status, reasons = personal_job_decision(job, profile)
+        if status == "exclude":
+            return "C"
+        if status == "pending":
+            return "B"
+        return "A" if any(w in title.casefold() for w in _configured_title_keywords(profile)) else "B"
     normalized = title.casefold()
     excluded = tuple(
         unicodedata.normalize("NFKC", str(word)).strip().casefold()
@@ -409,6 +417,8 @@ def classify_job_tiers(
         return []
 
     tiers = [local_screening_tier(job, profile) for job in jobs]
+    if profile.get("selection_policy"):
+        return tiers  # Do not promote unresolved hard criteria through an LLM.
     ambiguous = [(index, jobs[index]) for index, tier in enumerate(tiers) if tier == "B"]
     if not ambiguous:
         return tiers
@@ -606,6 +616,8 @@ def _profile_context(profile: dict) -> str:
             "supporting_skills": matching.get("supporting_skills", []),
             "learning_targets": matching.get("learning_targets", []),
             "unverified_skills": matching.get("unverified_skills", []),
+            "selection_policy": profile.get("selection_policy", {}),
+            "preferred_cities": profile.get("preferred_cities", []),
             "degree": profile.get("degree", ""),
             "job_type": profile.get("job_type", ""),
         },
