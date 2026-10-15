@@ -1,66 +1,109 @@
-degree: 本科
+degree: 研究生
 job_type: 校招
-target_cohort: 2026
+target_cohort: 2027
 
 directions:
-  - 大模型应用开发
-  - AI应用开发
-  - Python后端开发
+  - 生物医药研发
+  - 药物研发与工艺
+  - 生物信息与测序
+  - 医疗器械研发
+  - 临床与注册
+  - 质量研究与质量管理
 
 skills:
+  - 分子生物学
+  - 细胞培养
+  - PCR/qPCR
+  - 蛋白表达与纯化
+  - 生物信息学
+  - 测序数据分析
+  - 实验设计与数据分析
   - Python
-  - Flask
-  - Django
-  - RESTful API
-  - LLM API
-  - Prompt Engineering
-  - RAG
-  - Embedding
-  - Git
-  - Linux
+  - R
+  - GMP
+  - GLP
 
-project_evidence:
-  - 基于大模型 API 构建多轮对话系统，维护对话上下文并封装统一服务接口
-  - 构建本地文档 RAG 系统，实现文本分块、Embedding 向量化、Top-K 相似度检索和上下文拼接
-  - 使用 Python 开发推荐系统和自动化数据采集系统
+project_evidence: []
 
 learning_targets:
-  - AI Agent
-  - LangChain
+  - 单细胞测序
+  - AI+生物医药
+  - 药物研发数据分析
 
 unverified_skills: []
 
 target_roles:
-  - name: 大模型应用开发
+  - name: 生物药与药物研发
     keywords:
-      - 大模型
-      - LLM
-      - RAG
-      - Agent
-      - Prompt
-      - AI 应用
-
-  - name: AI 应用开发
+      - 药物研发
+      - 生物药研发
+      - 抗体研发
+      - 蛋白
+      - 细胞培养
+      - 分子生物学
+      - 药理
+      - 毒理
+  - name: 生物信息与测序
     keywords:
-      - AI 应用
+      - 生物信息
+      - 生信
+      - 测序
+      - NGS
+      - 单细胞
+      - 数据分析
       - Python
-      - API
-      - 多轮对话
-      - 智能问答
-
-  - name: Python 后端开发
+      - R
+  - name: 工艺、分析与质量
     keywords:
-      - Python
-      - Flask
-      - Django
-      - RESTful API
-      - 后端
+      - 工艺研发
+      - 制剂
+      - 分析方法
+      - 质量研究
+      - QC
+      - QA
+      - GMP
+      - 验证
+  - name: 临床、注册与医学
+    keywords:
+      - 临床
+      - 注册
+      - 医学
+      - CRO
+      - CDMO
+      - 医学事务
+  - name: 医疗器械与IVD研发
+    keywords:
+      - 医疗器械
+      - IVD
+      - 体外诊断
+      - 试剂研发
+      - 硬件研发
+
+excluded_title_keywords:
+  - 销售
+  - 市场
+  - 行政
+  - 财务
+  - 采购
+  - 法务
+  - 客服
+  - 纯软件开发
+  - 纯前端
+  - 纯后端
 
 preferred_cities:
-  - 杭州
-  - 上海
   - 北京
+  - 上海
+  - 广州
   - 深圳
+  - 杭州
+  - 南京
+  - 苏州
+  - 武汉
+  - 成都
+  - 天津
+  - 济南
+  - 重庆
 
 score_component_limits:
   core_direction: 25
