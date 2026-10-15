@@ -23,6 +23,8 @@ jobs:
       # CI runner 是 UTC：cron UTC 22:00 = 中国次日 06:00，但 date.today() 在 UTC 下
       # 仍是前一天，导致报告标题/crawled_at 比中国日历晚一天。强制中国时区修正。
       TZ: Asia/Shanghai
+      PERSONAL_PROFILE_JSON: ${{ secrets.PERSONAL_PROFILE_JSON }}
+      SKIP_NOTIFY: "1"
     # 公司扩到数百家后，并发爬取仍可能跑较久；显式设上限留足余量（默认 360）。
     timeout-minutes: 330
     steps:
@@ -49,12 +51,13 @@ jobs:
 
       - name: Run pipeline
         env:
-          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY || secrets.DEEPSEEK }}
           FEISHU_WEBHOOK: ${{ secrets.FEISHU_WEBHOOK }}
           CI: "true"
         run: python main.py
 
       - name: Commit DB back to main
+        if: env.PERSONAL_PROFILE_JSON == ''
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -83,6 +86,7 @@ jobs:
           fi
 
       - name: Deploy report to gh-pages
+        if: env.PERSONAL_PROFILE_JSON == ''
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
