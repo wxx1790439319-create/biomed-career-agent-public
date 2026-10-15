@@ -85,12 +85,37 @@ jobs:
             git push
           fi
 
+      - name: Export public job facts only
+        run: |
+          python - <<'PY'
+          import csv, html
+          from pathlib import Path
+          import db
+          from profile_config import load_profile, select_personal_jobs
+          profile = load_profile()
+          conn = db.init_db('data/jobs.db')
+          import yaml
+          allowed = {c['name'] for c in yaml.safe_load(Path('config.yaml').read_text(encoding='utf-8'))['companies']}
+          jobs = select_personal_jobs([j for j in db.get_active_jobs(conn) if j.get('company') in allowed], profile)
+          headers = ['company', 'title', 'city', 'jd_url', 'review_status']
+          rows = [[j.get(k, '') for k in headers[:4]] + ['Pending manual verification' if j.get('selection_status') == 'pending' else 'Needs final JD verification'] for j in jobs]
+          out = Path('public-reports')
+          out.mkdir(exist_ok=True)
+          with (out / 'jobs.csv').open('w', encoding='utf-8-sig', newline='') as f:
+              writer = csv.writer(f)
+              writer.writerow(headers)
+              writer.writerows(rows)
+          cells = lambda row: '<tr>' + ''.join('<td>' + html.escape(str(v)) + '</td>' for v in row) + '</tr>'
+          (out / 'index.html').write_text('<meta charset="utf-8"><h1>Job shortlist</h1><p>Public job facts only. Eligibility and salary require verification.</p><a href="jobs.csv">Download CSV</a><table border="1">' + cells(headers) + ''.join(cells(r) for r in rows) + '</table>', encoding='utf-8')
+          print('Public shortlist rows:', len(rows))
+          conn.close()
+          PY
+
       - name: Deploy report to gh-pages
-        if: env.PERSONAL_PROFILE_JSON == ''
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./reports
+          publish_dir: ./public-reports
           publish_branch: gh-pages
           # 有意保留历史日期报告（每份约 50KB，长期体量可忽略，便于回看往期）
           keep_files: true
