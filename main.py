@@ -166,6 +166,8 @@ def main():
         analysis_model,
     )
 
+    allowed_companies = {c["name"] for c in config["companies"]}
+
     # 2. 初始化数据库
     db_path = Path(
         os.environ.get("JOBS_DB_PATH", Path(__file__).parent / "data" / "jobs.db")
@@ -323,7 +325,7 @@ def main():
     disappeared = db_module.get_disappeared_jobs(conn, successful_companies)
 
     # 6. 细分析活跃岗位
-    active = db_module.get_active_jobs(conn)
+    active = [j for j in db_module.get_active_jobs(conn) if j.get("company") in allowed_companies]
     active_current = [
         job for job in active if job_cohorts.is_confirmed_current(job)
     ]
@@ -382,11 +384,12 @@ def main():
     today_iso = date.today().isoformat()
     # 7.1 当日活跃快照（历史留档：reports/YYYY-MM-DD.html）
     report_data = db_module.get_active_report_data(conn)
+    report_data["items"] = [j for j in report_data.get("items", []) if j.get("company") in allowed_companies]
     report_path = reporter.generate_report(today_iso, report_data, reports_dir)
     # 7.2 累计首页（reports/index.html）：「总体岗位」=全部岗位按匹配度排序、
     #     「今日新增」=crawled_at==最新批次、「投递记录」=DB 投递看板（只读）。
     #     gh-pages 根路径稳定入口，每天覆盖刷新。
-    all_items = db_module.get_all_jobs_with_analysis(conn)
+    all_items = [j for j in db_module.get_all_jobs_with_analysis(conn) if j.get("company") in allowed_companies]
     reporter.generate_report(
         today_iso,
         {
@@ -401,7 +404,7 @@ def main():
     # 8. 飞书推送（FEISHU_WEBHOOK 未设置则静默跳过）
     #    「今日新增」用「最新批次 crawled_at」判定，而非本次运行新插入 new_jobs——
     #    否则本地批量导入+提交后，次日 CI 重爬岗位已存在，new_jobs=[] 会推「今日新增 0」。
-    all_jobs_with_analysis = db_module.get_all_jobs_with_analysis(conn)
+    all_jobs_with_analysis = [j for j in db_module.get_all_jobs_with_analysis(conn) if j.get("company") in allowed_companies]
     latest_crawl = db_module.get_latest_crawl_date(conn)
     notify_new = [
         j for j in active_current if j.get("crawled_at") == latest_crawl
